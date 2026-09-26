@@ -75,8 +75,11 @@ src/
 Add project screenshots in a `screenshots/` folder and link them here, for example:
 
 ```md
-![TaskFlow dashboard](screenshots/dashboard.png)
-![TaskFlow mobile layout](screenshots/mobile.png)
+TaskFlow dashboard]
+<img width="1917" height="857" alt="image" src="https://github.com/user-attachments/assets/db00b877-9a18-48ed-917a-8a73b120fc04" />
+
+![TaskFlow mobile layout]<img width="352" height="752" alt="image" src="https://github.com/user-attachments/assets/6c553fe2-6422-4c09-8326-d924f295e912" />
+
 ```
 
 ## Known Limitations
