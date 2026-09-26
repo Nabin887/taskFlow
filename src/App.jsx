@@ -17,23 +17,36 @@ const sampleTasks = [
   { id: 'sample-3', title: 'Finish portfolio website', description: 'Polish the project gallery and check mobile spacing.', category: 'Work', priority: 'High', completed: true, createdAt: new Date().toISOString() },
 ]
 
+function readStorage(key) {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+
+function writeStorage(key, value) {
+  try { localStorage.setItem(key, value) } catch { /* Storage can be unavailable in restricted browsers. */ }
+}
+
 function readStoredTasks() {
   try {
-    const saved = localStorage.getItem('taskflow-tasks')
+    const saved = readStorage('taskflow-tasks')
     if (saved === null) return sampleTasks
     const parsed = JSON.parse(saved)
-    return Array.isArray(parsed) ? parsed : sampleTasks
+    return Array.isArray(parsed) && parsed.every((task) => task && typeof task.id === 'string' && typeof task.title === 'string' && typeof task.description === 'string' && typeof task.category === 'string' && typeof task.priority === 'string' && typeof task.completed === 'boolean') ? parsed : sampleTasks
   } catch {
     return sampleTasks
   }
 }
 
+function readStoredProfile() {
+  try {
+    const profile = JSON.parse(readStorage('taskflow-profile'))
+    return profile && typeof profile.name === 'string' && typeof profile.email === 'string' ? profile : null
+  } catch { return null }
+}
+
 function App() {
   const [tasks, setTasks] = useState(readStoredTasks)
-  const [profile, setProfile] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('taskflow-profile')) } catch { return null }
-  })
-  const [theme, setTheme] = useState(() => localStorage.getItem('taskflow-theme') || 'light')
+  const [profile, setProfile] = useState(readStoredProfile)
+  const [theme, setTheme] = useState(() => readStorage('taskflow-theme') || 'light')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [categoryFilter, setCategoryFilter] = useState('All Categories')
@@ -42,26 +55,26 @@ function App() {
   const [showProfile, setShowProfile] = useState(false)
   const [schedule, setSchedule] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('taskflow-schedule'))
-      return saved ? { ...defaultSchedule, ...saved } : defaultSchedule
+      const saved = JSON.parse(readStorage('taskflow-schedule'))
+      return saved && Array.isArray(saved.days) ? { ...defaultSchedule, ...saved } : defaultSchedule
     } catch { return defaultSchedule }
   })
 
   useEffect(() => {
-    localStorage.setItem('taskflow-tasks', JSON.stringify(tasks))
+    writeStorage('taskflow-tasks', JSON.stringify(tasks))
   }, [tasks])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
-    localStorage.setItem('taskflow-theme', theme)
+    writeStorage('taskflow-theme', theme)
   }, [theme])
 
   useEffect(() => {
-    if (profile) localStorage.setItem('taskflow-profile', JSON.stringify(profile))
+    if (profile) writeStorage('taskflow-profile', JSON.stringify(profile))
   }, [profile])
 
   useEffect(() => {
-    localStorage.setItem('taskflow-schedule', JSON.stringify(schedule))
+    writeStorage('taskflow-schedule', JSON.stringify(schedule))
   }, [schedule])
 
   useEffect(() => {
@@ -72,9 +85,9 @@ function App() {
       const today = dayNames[now.getDay()]
       const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
       const reminderKey = `taskflow-reminder-${now.toDateString()}`
-      if (schedule.days.includes(today) && currentTime === schedule.reminderTime && localStorage.getItem(reminderKey) !== 'sent') {
+      if (schedule.days.includes(today) && currentTime === schedule.reminderTime && readStorage(reminderKey) !== 'sent') {
         new Notification('It’s work time', { body: `Your work day starts at ${schedule.startTime}. Let’s make a little progress.`, tag: 'taskflow-work-reminder' })
-        localStorage.setItem(reminderKey, 'sent')
+        writeStorage(reminderKey, 'sent')
       }
     }
     checkReminder()
